@@ -1,0 +1,176 @@
+###############################################
+# Common Keys for all apps
+###############################################
+
+x-common-keys: &common-keys
+    restart: unless-stopped
+    logging:
+      driver: json-file
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Pacific/Pohnpei
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+services:
+###############################################
+# RADARR - Movies
+###############################################
+  radarr:
+    <<: *common-keys
+    container_name: radarr
+    image: ghcr.io/hotio/radarr:latest
+    ports:
+      - 8092:7878
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/mac/docker/servarr/appdata/radarr:/config
+      - /home/mac/docker/servarr/data:/data
+
+###############################################
+# SONARR - TV Shows
+###############################################
+
+  sonarr:
+    <<: *common-keys
+    container_name: sonarr
+    image: ghcr.io/hotio/sonarr:latest
+    ports:
+      - 8093:8989
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/mac/docker/servarr/appdata/sonarr:/config
+      - /home/mac/docker/servarr/data:/data
+
+###############################################
+# LIDARR - Music
+###############################################
+
+  # lidarr:
+  #   <<: *common-keys
+  #   container_name: lidarr
+  #   image: ghcr.io/hotio/lidarr:latest
+  #   ports:
+  #     - 8097:8686
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - /home/mac/docker/servarr/appdata/lidarr:/config
+  #     - /home/mac/docker/servarr/data:/data
+
+###############################################
+# BAZARR - Subtitles
+###############################################
+
+  bazarr:
+    <<: *common-keys
+    container_name: bazarr
+    image: ghcr.io/hotio/bazarr:latest
+    ports:
+      - 8094:6767
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/mac/docker/servarr/appdata/bazarr:/config
+      - /home/mac/docker/servarr/data/media:/data/media
+
+###############################################
+# PROWLARR - Indexer Manager
+###############################################
+
+  prowlarr:
+    <<: *common-keys
+    container_name: prowlarr
+    image: ghcr.io/hotio/prowlarr:latest
+    ports:
+      - 8091:9696
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/mac/docker/servarr/appdata/prowlarr:/config
+
+###############################################
+# QBITTORRENT - Downloader
+###############################################
+
+  qbittorrent:
+    <<: *common-keys
+    container_name: qbittorrent
+    image: ghcr.io/hotio/qbittorrent:latest
+    # image: ghcr.io/qbittorrent/docker-qbittorrent-nox:latest
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    environment:
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/mac/docker/servarr/appdata/qbittorrent:/config
+      - /home/mac/docker/servarr/data:/data
+
+###############################################
+# JELLYFIN - Media Server
+###############################################
+
+  jellyfin:
+    <<: *common-keys
+    container_name: jellyfin
+    image: ghcr.io/hotio/jellyfin:latest
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/mac/docker/servarr/appdata/jellyfin:/config
+      - /home/mac/docker/servarr/data/media:/data/media:ro #read-only
+    ports:
+      - 8096:8096
+
+###################################
+# FLARESOLVERR - Cloudflare Bypass
+###################################
+
+  flaresolverr:
+    <<: *common-keys
+    container_name: flaresolverr
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    ports:
+      - 8095:8191
+    environment:
+      - LOG_LEVEL=info
+
+###############################################
+# PROFILARR - Config Management for Arr Apps
+###############################################
+
+  profilarr:
+    <<: *common-keys
+    container_name: profilarr
+    image: ghcr.io/dictionarry-hub/profilarr:latest
+    ports:
+      - 8098:6868
+    environment:
+      - PARSER_HOST=parser
+      - PARSER_PORT=5000
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/mac/docker/servarr/appdata/profilarr:/config
+    depends_on:
+      parser:
+        condition: service_healthy
+
+  parser:
+    <<: *common-keys
+    container_name: parser
+    image: ghcr.io/dictionarry-hub/profilarr-parser:latest
+    expose:
+      - 5000
+
+###############################################
+# ARR Stack Dedicated Network
+###############################################
+
+networks:
+  default:
+    name: arr_network
+
+###############################################
+###############################################
