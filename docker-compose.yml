@@ -26,8 +26,8 @@ services:
       - 8092:7878
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /home/mac/docker/servarr/appdata/radarr:/config
-      - /home/mac/docker/servarr/data:/data
+      - /home/mac/.docker/servarr/appdata/radarr:/config
+      - /home/mac/.docker/servarr/data:/data
 
 ###############################################
 # SONARR - TV Shows
@@ -41,8 +41,8 @@ services:
       - 8093:8989
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /home/mac/docker/servarr/appdata/sonarr:/config
-      - /home/mac/docker/servarr/data:/data
+      - /home/mac/.docker/servarr/appdata/sonarr:/config
+      - /home/mac/.docker/servarr/data:/data
 
 ###############################################
 # LIDARR - Music
@@ -56,8 +56,8 @@ services:
   #     - 8097:8686
   #   volumes:
   #     - /etc/localtime:/etc/localtime:ro
-  #     - /home/mac/docker/servarr/appdata/lidarr:/config
-  #     - /home/mac/docker/servarr/data:/data
+  #     - /home/mac/.docker/servarr/appdata/lidarr:/config
+  #     - /home/mac/.docker/servarr/data:/data
 
 ###############################################
 # BAZARR - Subtitles
@@ -71,8 +71,8 @@ services:
       - 8094:6767
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /home/mac/docker/servarr/appdata/bazarr:/config
-      - /home/mac/docker/servarr/data/media:/data/media
+      - /home/mac/.docker/servarr/appdata/bazarr:/config
+      - /home/mac/.docker/servarr/data/media:/data/media
 
 ###############################################
 # PROWLARR - Indexer Manager
@@ -86,7 +86,7 @@ services:
       - 8091:9696
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /home/mac/docker/servarr/appdata/prowlarr:/config
+      - /home/mac/.docker/servarr/appdata/prowlarr:/config
 
 ###############################################
 # QBITTORRENT - Downloader
@@ -106,8 +106,8 @@ services:
       - TORRENTING_PORT=6881
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /home/mac/docker/servarr/appdata/qbittorrent:/config
-      - /home/mac/docker/servarr/data:/data
+      - /home/mac/.docker/servarr/appdata/qbittorrent:/config
+      - /home/mac/.docker/servarr/data:/data
 
 ###############################################
 # JELLYFIN - Media Server
@@ -119,8 +119,8 @@ services:
     image: ghcr.io/hotio/jellyfin:latest
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /home/mac/docker/servarr/appdata/jellyfin:/config
-      - /home/mac/docker/servarr/data/media:/data/media:ro #read-only
+      - /home/mac/.docker/servarr/appdata/jellyfin:/config
+      - /home/mac/.docker/servarr/data/media:/data/media:ro #read-only
     ports:
       - 8096:8096
 
@@ -152,7 +152,7 @@ services:
       - PARSER_PORT=5000
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /home/mac/docker/servarr/appdata/profilarr:/config
+      - /home/mac/.docker/servarr/appdata/profilarr:/config
     depends_on:
       parser:
         condition: service_healthy

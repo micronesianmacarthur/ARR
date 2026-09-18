@@ -38,32 +38,30 @@ Bump the incoming reply TTL before forwarding so the reply survives the single
 
 This rule is in the kernel's ip table and is **lost on reboot** unless persisted.
 
-## Persistence (Arch, nftables-backed)
-Add a `prerouting` chain to the existing `inet filter` table in `/etc/nftables.conf`:
+## Persistence (UFW-backed)
+> Note: the actual host firewall is **UFW** (`ufw.service` enabled), NOT
+> `nftables.service` (inactive). Do NOT follow an nftables-based persistence route.
 
-```nft
-table inet filter {
-    chain input { ... }    # existing
-    chain forward { ... }  # existing
-
-    chain prerouting {     # add this
-        type filter hook prerouting priority mangle;
-        policy accept;
-        iif "wlp1s0" ct state { established, related } ip ttl set 62
-    }
-}
-```
-
-Apply (only if immediate application is wanted; otherwise it applies at next boot):
+The mangle rule is persisted in `/etc/ufw/before.rules` (loaded by `ufw` at boot and on
+`ufw reload`). Append the `*mangle` section after the existing `*filter` block:
 
 ```
-sudo systemctl restart nftables
-sudo systemctl restart docker
+# TTL fix: ISP link returns reply packets with IP ttl 1, which dies on ip_forward.
+*mangle
+:PREROUTING ACCEPT [0:0]
+-A PREROUTING -i wlp1s0 -m conntrack --ctstate RELATED,ESTABLISHED -j TTL --ttl-set 62
+COMMIT
 ```
 
-> `docker restart` is required after `nftables` reload because it flushes Docker's own
-> iptables chains (NAT/DOCKER-*). The runtime mangle rule and the config rule are
-> idempotent (both `--ttl-set`/`ttl set` to a fixed value), so having both is harmless.
+Validate and apply:
+```
+cat /etc/ufw/before.rules | sudo iptables-restore --test   # syntax check
+sudo ufw reload
+```
+
+After reload two identical PREROUTING rules may coexist (the live iptables rule + the
+reloaded one; `ufw reload` uses `--noflush`). They are idempotent — keep either. To
+de-duplicate: `sudo iptables -t mangle -D PREROUTING 2`.
 
 ## Verification
 ```
@@ -73,8 +71,9 @@ docker exec radarr sh -c 'curl -sS -o /dev/null -w "%{http_code} %{time_total}s"
 
 ## Troubleshooting notes (do not regress)
 - `net.ipv4.ip_forward=1` is required and set.
-- The host firewall (`/etc/nftables.conf`, nftables.service) has a `forward` chain with
-  `policy drop`; it allows `ip saddr/daddr 172.16.0.0/12`. UFW has been disabled.
+- The host firewall is UFW (iptables-nft; `ufw` commands) with default `deny routed`;
+  Docker's forward traffic is allowed via the `DOCKER-USER`/`DOCKER-FORWARD` chains,
+  which permit `ip saddr 172.16.0.0/12` etc. `nftables.service` is inactive.
 - Docker's published ports and MASQUERADE NAT are intact and were never the problem.
 - rp_filter, ip rules, conntrack, and the DOCKER-USER isolation rules were all ruled
   out during diagnosis.
